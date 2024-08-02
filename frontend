@@ -1,0 +1,76 @@
+import React, { useState } from 'react';
+import axios from 'axios';
+import Select from 'react-select';
+
+const App = () => {
+  const [jsonInput, setJsonInput] = useState('');
+  const [response, setResponse] = useState(null);
+  const [error, setError] = useState('');
+  const [options, setOptions] = useState([]);
+  const [selectedOptions, setSelectedOptions] = useState([]);
+
+  const handleInputChange = (event) => {
+    setJsonInput(event.target.value);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const parsedJson = JSON.parse(jsonInput);
+      setError('');
+      // Replace with your backend API URL
+      const result = await axios.post('http://your-backend-api-url/process', parsedJson);
+      setResponse(result.data);
+      setOptions([
+        { value: 'alphabets', label: 'Alphabets' },
+        { value: 'numbers', label: 'Numbers' },
+        { value: 'highest_alphabet', label: 'Highest Alphabet' }
+      ]);
+    } catch (err) {
+      setError('Invalid JSON input or API call failed');
+      setResponse(null);
+      setOptions([]);
+    }
+  };
+
+  const handleOptionChange = (selected) => {
+    setSelectedOptions(selected || []);
+  };
+
+  const renderResponse = () => {
+    if (!response) return null;
+    const filteredData = selectedOptions.reduce((acc, option) => {
+      if (option.value === 'alphabets') acc.push(...response.alphabets || []);
+      if (option.value === 'numbers') acc.push(...response.numbers || []);
+      if (option.value === 'highest_alphabet') acc.push(response.highest_alphabet || '');
+      return acc;
+    }, []);
+
+    return <div>{filteredData.join(', ')}</div>;
+  };
+
+  return (
+    <div>
+      <h1>Your Roll Number</h1>
+      <textarea
+        rows="5"
+        cols="50"
+        value={jsonInput}
+        onChange={handleInputChange}
+        placeholder='Enter JSON here e.g. {"data": ["A", "C", "z"]}'
+      />
+      <button onClick={handleSubmit}>Submit</button>
+      {error && <div style={{ color: 'red' }}>{error}</div>}
+      {options.length > 0 && (
+        <Select
+          isMulti
+          options={options}
+          onChange={handleOptionChange}
+          placeholder='Select options'
+        />
+      )}
+      <div>{renderResponse()}</div>
+    </div>
+  );
+};
+
+export default App;
